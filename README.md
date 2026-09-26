@@ -60,3 +60,6 @@ popup (React UI)  ── typed RPC (chrome.runtime messages) ──►  backgrou
 ## Roadmap
 dApp connectivity (EIP-1193 + Solana Wallet Standard) · swaps (WDK Velora module) · incoming tx history (WDK Indexer API) ·
 privacy layer (Hinkal, once testnet/MV3 support allows)
+
+## License
+[MIT](LICENSE). See [SECURITY.md](SECURITY.md) for reporting vulnerabilities and known limitations.
