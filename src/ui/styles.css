@@ -1,0 +1,487 @@
+@import "tailwindcss";
+
+/* `panel:` applies only in the side panel (html[data-surface="panel"]). */
+@custom-variant panel (&:where([data-surface="panel"] *));
+
+/*
+ * DTMS theme layer — design/dtms/DESIGN.md.
+ * Raw values live in --dt-* variables with light and dark sets that follow the system
+ * appearance. Tailwind utilities (bg-card, text-label-2, rounded-card, text-body, …) read
+ * them through the semantic tokens below, so screens never reference a color directly.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Background gradient (DESIGN.md "Background gradient"): base + 4 blurred blobs */
+  --dt-bg-base: #f5eef0;
+  --dt-blob-magenta: #ff4f8b;
+  --dt-blob-magenta-opacity: 0.62;
+  --dt-blob-blue: #4c6fff;
+  --dt-blob-blue-opacity: 0.55;
+  --dt-blob-coral: #ff9a5c;
+  --dt-blob-coral-opacity: 0.55;
+  --dt-blob-lilac: #b792ff;
+  --dt-blob-lilac-opacity: 0.45;
+  --dt-sheet-dim: rgba(0, 0, 0, 0.35); /* over the gradient behind the Send sheet */
+
+  /* Glass surfaces (DESIGN.md "Glass surfaces"): cards, list rows, tiles, receipt, segmented track */
+  --dt-surface-bg: rgba(255, 255, 255, 0.55);
+  --dt-surface-stroke: rgba(255, 255, 255, 0.65);
+  --dt-surface-sheet-bg: rgba(255, 255, 255, 0.55); /* cards inside the Send sheet */
+  --dt-sheet-glass-bg: rgba(246, 242, 246, 0.72); /* the Send sheet itself, blur 40 */
+
+  /* Surfaces */
+  /* (screens have no solid background: the gradient shows through; cards are glass) */
+  --dt-sheet-behind: rgba(142, 142, 147, 0.55); /* stacked sheet peeking out */
+  --dt-scrim: rgba(0, 0, 0, 0.35);
+  --dt-pressed: rgba(0, 0, 0, 0.05);
+  --dt-skeleton: rgba(0, 0, 0, 0.06);
+
+  /* Labels */
+  --dt-label: #000000;
+  --dt-label-2: #4e4e54;
+  --dt-label-3: #8e8e93;
+  --dt-on-accent: #ffffff;
+  --dt-separator: rgba(60, 60, 67, 0.16);
+  --dt-chevron: #c7c7cc; /* chevrons, grabber */
+
+  /* Fills */
+  --dt-fill-3: rgba(118, 118, 128, 0.14);
+  --dt-segment-selected: #ffffff;
+
+  /* Tints */
+  --dt-accent: #0071e3;
+  --dt-link: #0066cc;
+  --dt-positive: #34c759;
+  --dt-positive-text: #248a3d;
+  --dt-negative: #ff3b30;
+  --dt-negative-text: #d70015;
+  --dt-warning: #ff9f0a;
+  --dt-warning-text: #c93400;
+
+  /* Chart */
+  --dt-chart-ring: #ffffff; /* end-dot ring matches the background */
+
+
+  /* Glass material */
+  --dt-glass-bg: rgba(255, 255, 255, 0.62);
+  --dt-glass-border: rgba(255, 255, 255, 0.8);
+  --dt-glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --dt-glass-sm-bg: rgba(255, 255, 255, 0.55);
+  --dt-glass-sm-border: rgba(255, 255, 255, 0.7);
+  --dt-glass-sm-shadow: 0 6px 18px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  /* Shadows */
+  --dt-shadow-segment: 0 2px 6px rgba(0, 0, 0, 0.12);
+  --dt-shadow-avatar: 0 6px 18px rgba(0, 0, 0, 0.08);
+
+  /* App icon */
+  --dt-icon-bg: #000000;
+  --dt-icon-border: transparent;
+  --dt-icon-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+
+  /* Avatars (same in both appearances) */
+  --dt-avatar-border: rgba(255, 255, 255, 0.7);
+  --dt-badge-ring: rgba(255, 255, 255, 0.9); /* network badge cut-out on coin avatars */
+  --dt-avatar-from: #a1a1a6;
+  --dt-avatar-to: #7c7c80;
+  --dt-recipient-from: #ffb340;
+  --dt-recipient-to: #ff9f0a;
+
+  /* Coin colors (same in both appearances) */
+  --dt-coin-sol: #5e5ce6;
+  --dt-coin-btc: #ff9f0a;
+  --dt-coin-usdc: #0a84ff;
+  --dt-coin-eth: #627eea;
+  --dt-coin-pol: #af52de;
+  --dt-coin-usdt: #30b0c7;
+  --dt-coin-other: #8e8e93;
+
+  /* QR codes stay dark-on-white in both appearances so they scan reliably. */
+  --dt-qr-bg: #ffffff;
+  --dt-qr-fg: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --dt-bg-base: #06060b;
+    --dt-blob-magenta: #c8175f;
+    --dt-blob-magenta-opacity: 0.6;
+    --dt-blob-blue: #1b3bd1;
+    --dt-blob-blue-opacity: 0.62;
+    --dt-blob-coral: #e4552a;
+    --dt-blob-coral-opacity: 0.38;
+    --dt-blob-lilac: #5b22c9;
+    --dt-blob-lilac-opacity: 0.5;
+    --dt-sheet-dim: rgba(0, 0, 0, 0.5);
+
+    --dt-surface-bg: rgba(38, 38, 44, 0.48);
+    --dt-surface-stroke: rgba(255, 255, 255, 0.1);
+    --dt-surface-sheet-bg: rgba(80, 80, 88, 0.4);
+    --dt-sheet-glass-bg: rgba(28, 28, 32, 0.7);
+
+    --dt-sheet-behind: rgba(58, 58, 60, 0.8);
+    --dt-scrim: rgba(0, 0, 0, 0.6);
+    --dt-pressed: rgba(255, 255, 255, 0.08);
+    --dt-skeleton: rgba(255, 255, 255, 0.08);
+
+    --dt-label: #ffffff;
+    --dt-label-2: #b4b4ba;
+    --dt-label-3: #8e8e93;
+    --dt-separator: rgba(255, 255, 255, 0.12);
+    --dt-chevron: #5a5a5e;
+
+    --dt-fill-3: rgba(118, 118, 128, 0.26);
+    --dt-segment-selected: #636366;
+
+    --dt-accent: #0a84ff;
+    --dt-link: #409cff;
+    --dt-positive: #30d158;
+    --dt-positive-text: #30d158;
+    --dt-negative: #ff453a;
+    --dt-negative-text: #ff453a;
+    --dt-warning: #ff9f0a;
+    --dt-warning-text: #ffb340;
+
+    --dt-chart-ring: #000000;
+
+
+    --dt-glass-bg: rgba(44, 44, 46, 0.62);
+    --dt-glass-border: rgba(255, 255, 255, 0.14);
+    --dt-glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    --dt-glass-sm-bg: rgba(44, 44, 46, 0.62);
+    --dt-glass-sm-border: rgba(255, 255, 255, 0.14);
+    --dt-glass-sm-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+    --dt-shadow-segment: 0 2px 6px rgba(0, 0, 0, 0.3);
+    --dt-shadow-avatar: 0 6px 18px rgba(0, 0, 0, 0.4);
+
+    --dt-icon-bg: #1c1c1e;
+    --dt-icon-border: #3a3a3c;
+    --dt-icon-shadow: 0 12px 30px rgba(10, 132, 255, 0.25);
+
+    --dt-avatar-border: rgba(255, 255, 255, 0.14);
+    --dt-badge-ring: #26262c;
+  }
+}
+
+@theme inline {
+  --color-*: initial;
+
+  --color-sheet-behind: var(--dt-sheet-behind);
+  --color-scrim: var(--dt-scrim);
+  --color-pressed: var(--dt-pressed);
+  --color-skeleton: var(--dt-skeleton);
+
+  --color-label: var(--dt-label);
+  --color-label-2: var(--dt-label-2);
+  --color-label-3: var(--dt-label-3);
+  --color-on-accent: var(--dt-on-accent);
+  --color-separator: var(--dt-separator);
+  --color-chevron: var(--dt-chevron);
+
+  --color-fill-3: var(--dt-fill-3);
+  --color-segment-selected: var(--dt-segment-selected);
+
+  --color-accent: var(--dt-accent);
+  --color-link: var(--dt-link);
+  --color-positive: var(--dt-positive);
+  --color-positive-text: var(--dt-positive-text);
+  --color-negative: var(--dt-negative);
+  --color-negative-text: var(--dt-negative-text);
+  --color-warning: var(--dt-warning);
+  --color-warning-text: var(--dt-warning-text);
+
+  --color-chart-ring: var(--dt-chart-ring);
+
+  --color-coin-sol: var(--dt-coin-sol);
+  --color-coin-btc: var(--dt-coin-btc);
+  --color-coin-usdc: var(--dt-coin-usdc);
+  --color-coin-eth: var(--dt-coin-eth);
+  --color-coin-pol: var(--dt-coin-pol);
+  --color-coin-usdt: var(--dt-coin-usdt);
+  --color-coin-other: var(--dt-coin-other);
+  --color-avatar-border: var(--dt-avatar-border);
+  --color-badge-ring: var(--dt-badge-ring);
+  --color-sheet-dim: var(--dt-sheet-dim);
+  --color-qr-bg: var(--dt-qr-bg);
+  --color-qr-fg: var(--dt-qr-fg);
+  --color-transparent: transparent;
+
+  /* Shadows */
+  --shadow-segment: var(--dt-shadow-segment);
+  --shadow-avatar: var(--dt-shadow-avatar);
+  --shadow-icon: var(--dt-icon-shadow);
+  --shadow-success: 0 16px 36px color-mix(in srgb, var(--dt-positive) 35%, transparent);
+  --shadow-pending: 0 16px 36px color-mix(in srgb, var(--dt-warning) 35%, transparent);
+  --shadow-failure: 0 16px 36px color-mix(in srgb, var(--dt-negative) 35%, transparent);
+}
+
+@theme {
+  /* Fonts */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /*
+   * Type scale in rem so text follows the browser's font-size setting (the web's
+   * equivalent of Dynamic Type). Line height stays `normal`, as in the handoff markup.
+   */
+  --text-large-title: 2.125rem; /* 34/700 */
+  --text-large-title--line-height: normal;
+  --text-large-title--letter-spacing: -0.02em;
+  --text-large-title--font-weight: 700;
+  --text-title: 1.875rem; /* 30 — onboarding page titles */
+  --text-title--line-height: normal;
+  --text-title--letter-spacing: -0.02em;
+  --text-title--font-weight: 700;
+  --text-headline: 1.0625rem; /* 17/600 */
+  --text-headline--line-height: normal;
+  --text-headline--font-weight: 600;
+  --text-body: 1.0625rem; /* 17 */
+  --text-body--line-height: normal;
+  --text-callout: 0.9375rem; /* 15 */
+  --text-callout--line-height: normal;
+  --text-subhead: 0.875rem; /* 14 */
+  --text-subhead--line-height: normal;
+  --text-footnote: 0.8125rem; /* 13 */
+  --text-footnote--line-height: normal;
+  --text-caption: 0.75rem; /* 12 */
+  --text-caption--line-height: normal;
+  --text-tab: 0.625rem; /* 10/600 */
+  --text-tab--line-height: normal;
+  --text-tab--font-weight: 600;
+
+  /* Numbers (use with the `num` utility for SF Pro Rounded + tabular figures) */
+  --text-balance: 3.125rem; /* 50/700 */
+  --text-balance--line-height: 1;
+  --text-balance--letter-spacing: -0.03em;
+  --text-balance--font-weight: 700;
+  --text-amount: 3.5rem; /* 80 in the handoff; 56 to fit the 600px popup */
+  --text-amount--line-height: 1;
+  --text-amount--letter-spacing: -0.04em;
+  --text-amount--font-weight: 700;
+  --text-amount-unit: 1.625rem; /* 30 in the handoff */
+  --text-amount-unit--line-height: 1;
+  --text-amount-unit--font-weight: 700;
+  --text-sent: 2.75rem; /* 44/700 */
+  --text-sent--line-height: normal;
+  --text-sent--letter-spacing: -0.03em;
+  --text-sent--font-weight: 700;
+  --text-keypad: 1.875rem; /* 30/500 */
+  --text-keypad--line-height: 1;
+  --text-keypad--font-weight: 500;
+
+  /* Radii */
+  --radius-card: 26px; /* grouped lists, receipt cards */
+  --radius-tile: 20px; /* action tiles */
+  --radius-sheet: 38px; /* sheet top corners */
+  --radius-field: 14px; /* text fields */
+  --radius-icon: 20px; /* 84pt app icon */
+}
+
+/* Liquid-glass material: floating tab bar, search button, toasts. */
+@utility glass {
+  background: var(--dt-glass-bg);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--dt-glass-border);
+  box-shadow: var(--dt-glass-shadow);
+}
+
+/*
+ * Glass surface for cards, list groups, action tiles, the receipt and the segmented track:
+ * translucent fill + backdrop blur 30 + 1px inner stroke. Inside a sheet (which already blurs
+ * the backdrop and becomes the backdrop root), --dt-surface-filter is `none` so blur isn't nested.
+ */
+@utility glass-surface {
+  background: var(--dt-surface-bg);
+  backdrop-filter: var(--dt-surface-filter, blur(30px) saturate(180%));
+  box-shadow: inset 0 0 0 1px var(--dt-surface-stroke);
+}
+
+/* Lighter variant for 44pt header buttons. */
+@utility glass-sm {
+  background: var(--dt-glass-sm-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--dt-glass-sm-border);
+  box-shadow: var(--dt-glass-sm-shadow);
+}
+
+/* SF Pro Rounded with tabular figures, for all numbers. */
+@utility num {
+  font-family: var(--font-rounded);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Glass sheet (Send sheet, action sheets): translucent fill + blur 40. The sheet is the backdrop
+ * root for its children, so nested glass surfaces switch to their in-sheet fill without a
+ * second blur (it would cost GPU time and look identical).
+ */
+@utility sheet-glass {
+  --dt-surface-filter: none;
+  --dt-surface-bg: var(--dt-surface-sheet-bg);
+  background: var(--dt-sheet-glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+}
+
+@utility scroll-area {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    line-height: normal; /* the handoff markup uses the browser default, not Tailwind's 1.5 */
+    background: var(--dt-bg-base);
+    color: var(--dt-label);
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    min-height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Side panel: fill the panel, which is as tall as the browser window. */
+  html[data-surface='panel'] body {
+    min-height: 100vh;
+    display: block;
+  }
+  html[data-surface='panel'] #root {
+    width: 100%;
+    height: 100vh;
+  }
+  /* Chrome caps extension popups at 800×600; the frame also centers when opened in a tab. */
+  #root {
+    position: relative;
+    width: 390px;
+    height: 600px;
+    overflow: hidden;
+    background: var(--dt-bg-base);
+  }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--dt-label-3);
+  }
+}
+
+/*
+ * Full-bleed background gradient: base color + 4 heavily blurred blobs (390×844 geometry from
+ * the handoff; bottom-anchored blobs stay anchored to the 600px popup's bottom edge).
+ * Rendered once and promoted to its own compositor layer, so it's rasterized a single time
+ * and never repainted while content scrolls or animates above it.
+ */
+@layer components {
+  .gradient-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--dt-bg-base);
+    contain: strict;
+    isolation: isolate;
+    transform: translateZ(0);
+  }
+  .gradient-bg > span {
+    position: absolute;
+    border-radius: 50%;
+    /* Drift. Only transform animates, so the blurred blobs are rasterized once and moved by the
+       compositor without repainting. Negative delays start each blob mid-motion. */
+    will-change: transform;
+    animation: var(--blob-drift) var(--blob-duration) ease-in-out var(--blob-delay) infinite alternate;
+  }
+  .gradient-bg > .blob-magenta {
+    --blob-drift: drift-a;
+    --blob-duration: 12s;
+    --blob-delay: -5s;
+    top: -140px;
+    right: -120px;
+    width: 380px;
+    height: 380px;
+    background: var(--dt-blob-magenta);
+    opacity: var(--dt-blob-magenta-opacity);
+    filter: blur(90px);
+  }
+  .gradient-bg > .blob-blue {
+    --blob-drift: drift-b;
+    --blob-duration: 14s;
+    --blob-delay: -9s;
+    top: 180px;
+    left: -170px;
+    width: 400px;
+    height: 400px;
+    background: var(--dt-blob-blue);
+    opacity: var(--dt-blob-blue-opacity);
+    filter: blur(100px);
+  }
+  .gradient-bg > .blob-coral {
+    --blob-drift: drift-c;
+    --blob-duration: 11s;
+    --blob-delay: -3s;
+    bottom: -120px;
+    right: -100px;
+    width: 360px;
+    height: 360px;
+    background: var(--dt-blob-coral);
+    opacity: var(--dt-blob-coral-opacity);
+    filter: blur(100px);
+  }
+  .gradient-bg > .blob-lilac {
+    --blob-drift: drift-d;
+    --blob-duration: 9s;
+    --blob-delay: -6s;
+    bottom: 60px;
+    left: -60px;
+    width: 260px;
+    height: 260px;
+    background: var(--dt-blob-lilac);
+    opacity: var(--dt-blob-lilac-opacity);
+    filter: blur(90px);
+  }
+}
+
+@keyframes drift-a {
+  from { transform: translate(40px, -30px) scale(0.95); }
+  to { transform: translate(-150px, 130px) scale(1.2); }
+}
+@keyframes drift-b {
+  from { transform: translate(-40px, 40px) scale(1); }
+  to { transform: translate(170px, -110px) scale(0.85); }
+}
+@keyframes drift-c {
+  from { transform: translate(30px, 30px) scale(1); }
+  to { transform: translate(-160px, -150px) scale(1.2); }
+}
+@keyframes drift-d {
+  from { transform: translate(-30px, 20px) scale(0.9); }
+  to { transform: translate(150px, -120px) scale(1.3); }
+}
+
+:root[data-sheet-open] .gradient-bg > span {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-bg > span {
+    animation: none;
+  }
+}
+
+/* The side panel has room for the handoff's full Send amount size. */
+html[data-surface='panel'] {
+  --text-amount: 5rem; /* 80 */
+  --text-amount-unit: 1.875rem; /* 30 */
+}

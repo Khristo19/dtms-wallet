@@ -1,0 +1,46 @@
+{
+  "name": "dtms-wallet",
+  "description": "DTMS Wallet — self-custodial EVM + Solana browser wallet built on Tether WDK",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare",
+    "test": "vitest run",
+    "test:e2e": "wxt build && node tests/e2e/flow.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-dropdown-menu": "^2.1.24",
+    "@tetherto/wdk": "^1.0.0-beta.18",
+    "@tetherto/wdk-wallet-evm": "^1.0.0-beta.19",
+    "@tetherto/wdk-wallet-solana": "^1.0.0-beta.16",
+    "framer-motion": "^13.4.4",
+    "lucide-react": "^1.48.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sodium-javascript": "^0.8.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@wxt-dev/module-react": "^1.1.5",
+    "puppeteer-core": "^25.12.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite-plugin-node-polyfills": "^0.28.0",
+    "vitest": "^5.0.2",
+    "web-ext": "^10.5.0",
+    "wxt": "^0.21.3"
+  }
+}

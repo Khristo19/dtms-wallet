@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DTMS Wallet — Send</title>
+
+<style>
+body{margin:0;display:flex;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;background:#1C1C1E;color:#000000;-webkit-font-smoothing:antialiased}
+a{color:#0066CC}a:hover{color:#004E9E}
+button{font-family:inherit}
+</style>
+</head>
+<body>
+
+
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #1C1C1E; isolation: isolate">
+  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; background: #F5EEF0"></div>
+  <div style="position: absolute; top: -140px; right: -120px; width: 380px; height: 380px; border-radius: 50%; background: #FF4F8B; filter: blur(90px); opacity: 0.62; z-index: -1"></div>
+  <div style="position: absolute; top: 180px; left: -170px; width: 400px; height: 400px; border-radius: 50%; background: #4C6FFF; filter: blur(100px); opacity: 0.55; z-index: -1"></div>
+  <div style="position: absolute; bottom: -120px; right: -100px; width: 360px; height: 360px; border-radius: 50%; background: #FF9A5C; filter: blur(100px); opacity: 0.55; z-index: -1"></div>
+  <div style="position: absolute; bottom: 60px; left: -60px; width: 260px; height: 260px; border-radius: 50%; background: #B792FF; filter: blur(90px); opacity: 0.45; z-index: -1"></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; z-index: -1; background: rgba(0,0,0,0.35)"></div>
+  <div style="position: absolute; top: 14px; left: 18px; right: 18px; height: 40px; border-radius: 38px 38px 0 0; background: #8E8E93; opacity: 0.55"></div>
+
+  <div style="position: absolute; top: 24px; left: 0; right: 0; bottom: 0; border-radius: 38px 38px 0 0; background: rgba(246,242,246,0.72); backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%); box-sizing: border-box; padding: 8px 16px 34px; display: flex; flex-direction: column; gap: 14px">
+    <div style="width: 36px; height: 5px; border-radius: 3px; background: #C7C7CC; align-self: center"></div>
+
+    <div style="display: grid; grid-template-columns: 44px 1fr 44px; align-items: center">
+      <a href="02-home.html" aria-label="Close" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(118,118,128,0.14); display: flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+      </a>
+      <h1 style="margin: 0; font-size: 17px; font-weight: 600; text-align: center">Send Solana</h1>
+      <a href="04-sent.html" aria-label="Send" style="width: 44px; height: 44px; border-radius: 50%; background: #0071E3; display: flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4M5 11l7-7 7 7"></path></svg>
+      </a>
+    </div>
+
+    <div style="border-radius: 26px; background: rgba(255,255,255,0.55); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.65); display: flex; align-items: center; gap: 12px; padding: 12px 16px">
+      <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(180deg, #FFB340, #FF9F0A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700">M</div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column">
+        <span style="font-size: 17px; font-weight: 600">Maya</span>
+        <span style="font-size: 13px; color: #4E4E54">maya.sol</span>
+      </div>
+      <button style="height: 34px; padding: 0 14px; border-radius: 999px; border: 0; background: rgba(118,118,128,0.14); color: #0071E3; font-size: 15px; font-weight: 600; cursor: pointer">Change</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 0 6px">
+      <div style="display: flex; align-items: baseline; gap: 6px">
+        <span style="font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 80px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums">12.5</span>
+        <span style="font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 700; color: #8E8E93">SOL</span>
+      </div>
+      <button style="height: 32px; padding: 0 12px; border-radius: 999px; border: 0; background: transparent; color: #4E4E54; font-size: 15px; display: flex; align-items: center; gap: 6px; cursor: pointer">$2,180.40
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4E4E54" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"></path></svg>
+      </button>
+      <span style="font-size: 13px; color: #8E8E93">142.60 SOL available</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; padding: 0 8px">
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">1</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">2</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">3</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">4</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">5</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">6</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">7</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">8</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">9</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">.</button>
+      <button style="height: 56px; border: 0; border-radius: 999px; background: transparent; color: #000000; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 30px; font-weight: 500; cursor: pointer">0</button>
+      <button aria-label="Delete" style="height: 56px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="#000000"><path d="M9 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9a2 2 0 0 1-1.5-.7L2 12l5.5-7.3A2 2 0 0 1 9 4zm2.8 4.4-1.4 1.4L12.6 12l-2.2 2.2 1.4 1.4L14 13.4l2.2 2.2 1.4-1.4-2.2-2.2 2.2-2.2-1.4-1.4L14 10.6z"></path></svg>
+      </button>
+    </div>
+
+    <a href="04-sent.html" style="margin-top: auto; height: 54px; border-radius: 999px; background: #0071E3; color: #FFFFFF; font-size: 17px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z"></path></svg>Send with Passkey</a>
+  </div>
+</div>
+
+</body>
+</html>
