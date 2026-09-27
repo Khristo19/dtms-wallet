@@ -9,7 +9,8 @@ import { Collectibles } from '@/src/ui/screens/Collectibles';
 import { Home } from '@/src/ui/screens/Home';
 import { Onboarding } from '@/src/ui/screens/onboarding/Onboarding';
 import { Receive } from '@/src/ui/screens/Receive';
-import { RevealSeed } from '@/src/ui/screens/RevealSeed';
+import { RevealSecret } from '@/src/ui/screens/RevealSecret';
+import { AddAccount } from '@/src/ui/screens/AddAccount';
 import { Search } from '@/src/ui/screens/Search';
 import { Send } from '@/src/ui/screens/Send';
 import { Settings } from '@/src/ui/screens/Settings';
@@ -117,7 +118,9 @@ function PageView({ page }: { page: Page }) {
       return <Search />;
     case 'settings':
       return <Settings />;
-    case 'revealSeed':
-      return <RevealSeed />;
+    case 'revealSecret':
+      return <RevealSecret keyringId={page.keyringId} />;
+    case 'addAccount':
+      return <AddAccount />;
   }
 }

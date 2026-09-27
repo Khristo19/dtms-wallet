@@ -2,14 +2,16 @@ import { formatAmount, formatUsd, shortAddress } from '@/src/lib/format';
 import { CoinAvatar } from '../components/Avatars';
 import { copyText, cx, Grouped, openTab, Row, Separator, SheetPage } from '../components/ui';
 import { ArrowDownCircleFill, ArrowUpCircleFill } from '../icons';
-import { useAccount, useAssets, useStore, type AssetRef } from '../store';
+import { isWatchOnly, useAccount, useAssets, useStore, type AssetRef } from '../store';
+import { addressFor } from '@/src/lib/rpc';
 
 export function TokenDetail({ asset: ref }: { asset: AssetRef }) {
   const { pop, push, hideBalance } = useStore();
   const account = useAccount()!;
   const asset = useAssets().find((a) => a.networkId === ref.networkId && a.token === ref.token);
   if (!asset) return null;
-  const address = asset.network.kind === 'evm' ? account.evmAddress : account.solanaAddress;
+  const address = addressFor(account, asset.network.kind)!;
+  const watchOnly = isWatchOnly(account);
   const ch = asset.change24h;
 
   return (
@@ -30,14 +32,16 @@ export function TokenDetail({ asset: ref }: { asset: AssetRef }) {
         </div>
       </div>
 
-      <div className="grid shrink-0 grid-cols-2 gap-[10px]">
-        <button
-          onClick={() => push({ name: 'send', asset: ref })}
-          className="flex h-16 flex-col items-center justify-center gap-1 rounded-tile border-0 bg-accent text-caption font-semibold text-on-accent active:opacity-70"
-        >
-          <ArrowUpCircleFill />
-          Send
-        </button>
+      <div className={cx('grid shrink-0 gap-[10px]', watchOnly ? 'grid-cols-1' : 'grid-cols-2')}>
+        {!watchOnly && (
+          <button
+            onClick={() => push({ name: 'send', asset: ref })}
+            className="flex h-16 flex-col items-center justify-center gap-1 rounded-tile border-0 bg-accent text-caption font-semibold text-on-accent active:opacity-70"
+          >
+            <ArrowUpCircleFill />
+            Send
+          </button>
+        )}
         <button
           onClick={() => push({ name: 'receive', kind: asset.network.kind })}
           className="flex h-16 flex-col items-center justify-center gap-1 rounded-tile border-0 glass-surface text-caption font-semibold text-label active:opacity-70"

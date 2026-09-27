@@ -1,10 +1,11 @@
 import WDK from '@tetherto/wdk';
-import WalletManagerEvm from '@tetherto/wdk-wallet-evm';
-import WalletManagerSolana from '@tetherto/wdk-wallet-solana';
-import { getNetwork, networksFor, type NetworkMode } from '@/src/lib/networks';
-import type { BalanceEntry, SendParams } from '@/src/lib/rpc';
-
-type Account = Awaited<ReturnType<WDK['getAccount']>>;
+import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm';
+import WalletManagerSolana, { WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana';
+import { getNetwork, networksFor, type Network, type NetworkMode } from '@/src/lib/networks';
+import { addressFor, type AccountInfo, type BalanceEntry, type SendParams } from '@/src/lib/rpc';
+import { solanaAddressFromKey } from '@/src/lib/keys';
+import type { Secret } from './keyrings';
+import { SolanaKeyAccount } from './solanaKey';
 
 /**
  * Each WDK wallet package pins its own exact @tetherto/wdk-wallet beta, so TypeScript sees
@@ -16,10 +17,36 @@ const SolanaManager = WalletManagerSolana as unknown as Manager;
 type EvmConfig = ConstructorParameters<typeof WalletManagerEvm>[1];
 type SolanaConfig = ConstructorParameters<typeof WalletManagerSolana>[1];
 
-/** Owns the live WDK instance. Holds the seed only while unlocked. */
+type PrivateKeySecret = Extract<Secret, { kind: 'privateKey' }>;
+
+/** The slice of the WDK account API we use; phrase, private-key and read-only accounts all provide it. */
+interface ChainAccount {
+  getAddress(): Promise<string>;
+  getBalance(): Promise<bigint>;
+  getTokenBalance(token: string): Promise<bigint>;
+  getTransactionReceipt(hash: string): Promise<unknown>;
+  quoteSendTransaction(tx: { to: string; value: bigint }): Promise<{ fee: bigint }>;
+  quoteTransfer(o: { token: string; recipient: string; amount: bigint }): Promise<{ fee: bigint }>;
+  sendTransaction?(tx: { to: string; value: bigint }): Promise<{ hash: string; fee: bigint }>;
+  transfer?(o: { token: string; recipient: string; amount: bigint }): Promise<{ hash: string; fee: bigint }>;
+  dispose?(): void;
+}
+
+export class WatchOnlyError extends Error {
+  constructor() {
+    super("This is a watch-only account — it can't send.");
+  }
+}
+
+/**
+ * Owns the live WDK state while the wallet is unlocked: one WDK instance per recovery phrase,
+ * plus lazily created accounts for imported private keys and watched addresses.
+ */
 export class WalletEngine {
-  private wdk: WDK | null = null;
   private mode: NetworkMode | null = null;
+  private wdks = new Map<string, WDK>();
+  private keys = new Map<string, PrivateKeySecret>();
+  private standalone = new Map<string, Promise<ChainAccount>>();
 
   static generateMnemonic(): string {
     return WDK.getRandomSeedPhrase();
@@ -29,56 +56,102 @@ export class WalletEngine {
     return WDK.isValidSeed(normalizeMnemonic(m));
   }
 
-  get isLoaded() {
-    return this.wdk !== null;
+  /** Public address for an imported key, without needing a network. */
+  static async addressForKey(secret: Pick<PrivateKeySecret, 'chain' | 'key'>): Promise<string> {
+    if (secret.chain === 'solana') return solanaAddressFromKey(secret.key);
+    const acct = WalletAccountEvm.fromPrivateKey(secret.key);
+    try {
+      return await acct.getAddress();
+    } finally {
+      acct.dispose();
+    }
   }
 
-  load(seed: string, mode: NetworkMode) {
+  get isLoaded() {
+    return this.mode !== null;
+  }
+
+  load(secrets: Secret[], mode: NetworkMode) {
     this.unload();
-    const wdk = new WDK(seed);
-    for (const n of networksFor(mode)) {
-      if (n.kind === 'evm') {
-        const config: EvmConfig = { provider: n.rpc, chainId: n.chainId };
-        wdk.registerWallet(n.id, EvmManager, config);
-      } else {
-        const config: SolanaConfig = { provider: n.rpc, commitment: 'confirmed' };
-        wdk.registerWallet(n.id, SolanaManager, config);
+    for (const secret of secrets) {
+      if (secret.kind === 'privateKey') {
+        this.keys.set(secret.id, secret);
+        continue;
       }
+      const wdk = new WDK(secret.mnemonic);
+      for (const n of networksFor(mode)) {
+        if (n.kind === 'evm') wdk.registerWallet(n.id, EvmManager, evmConfig(n));
+        else wdk.registerWallet(n.id, SolanaManager, solanaConfig(n));
+      }
+      this.wdks.set(secret.id, wdk);
     }
-    this.wdk = wdk;
     this.mode = mode;
   }
 
   unload() {
-    this.wdk?.dispose();
-    this.wdk = null;
+    for (const wdk of this.wdks.values()) wdk.dispose();
+    for (const acct of this.standalone.values()) void acct.then((a) => a.dispose?.()).catch(() => undefined);
+    this.wdks.clear();
+    this.keys.clear();
+    this.standalone.clear();
     this.mode = null;
   }
 
-  private account(networkId: string, index: number): Promise<Account> {
-    if (!this.wdk) throw new Error('Wallet is not loaded');
-    if (getNetwork(networkId).mode !== this.mode) throw new Error(`${networkId} is not active in ${this.mode} mode`);
-    return this.wdk.getAccount(networkId, index);
+  /** Resolves the WDK account behind `acct` on one network. */
+  private account(networkId: string, acct: AccountInfo): Promise<ChainAccount> {
+    if (!this.mode) throw new Error('Wallet is not loaded');
+    const network = getNetwork(networkId);
+    if (network.mode !== this.mode) throw new Error(`${networkId} is not active in ${this.mode} mode`);
+    const address = addressFor(acct, network.kind);
+    if (!address) throw new Error(`${acct.name} has no ${network.kind === 'evm' ? 'EVM' : 'Solana'} address`);
+    const src = acct.source;
+
+    if (src.type === 'mnemonic') {
+      const wdk = this.wdks.get(src.keyringId);
+      if (!wdk) throw new Error('Recovery phrase not found');
+      return wdk.getAccount(networkId, src.derivationIndex) as unknown as Promise<ChainAccount>;
+    }
+
+    const cacheKey = src.type === 'privateKey' ? `key:${src.keyringId}:${networkId}` : `watch:${acct.index}:${networkId}`;
+    let created = this.standalone.get(cacheKey);
+    if (!created) {
+      created = src.type === 'privateKey' ? this.keyAccount(src.keyringId, network) : Promise.resolve(watchAccount(address, network));
+      this.standalone.set(cacheKey, created);
+      created.catch(() => this.standalone.delete(cacheKey));
+    }
+    return created;
   }
 
-  /** The EVM address is identical on every EVM network, so one EVM + one Solana network is enough. */
-  async deriveAddresses(index: number): Promise<{ evmAddress: string; solanaAddress: string }> {
-    const nets = networksFor(this.mode!);
+  private async keyAccount(keyringId: string, network: Network): Promise<ChainAccount> {
+    const secret = this.keys.get(keyringId);
+    if (!secret) throw new Error('Private key not found');
+    if (secret.chain !== network.kind) throw new Error('Key does not belong to this network');
+    const acct = network.kind === 'evm' ? WalletAccountEvm.fromPrivateKey(secret.key, evmConfig(network)) : await SolanaKeyAccount.create(secret.key, solanaConfig(network));
+    return acct as unknown as ChainAccount;
+  }
+
+  /** EVM (same on every EVM network) and Solana addresses of account `derivationIndex` of a phrase. */
+  async addressesForMnemonic(keyringId: string, derivationIndex: number): Promise<{ evmAddress: string; solanaAddress: string }> {
+    const wdk = this.wdks.get(keyringId);
+    if (!wdk || !this.mode) throw new Error('Recovery phrase not found');
+    const nets = networksFor(this.mode);
     const evm = nets.find((n) => n.kind === 'evm')!;
     const sol = nets.find((n) => n.kind === 'solana')!;
     const [evmAddress, solanaAddress] = await Promise.all([
-      this.account(evm.id, index).then((a) => a.getAddress()),
-      this.account(sol.id, index).then((a) => a.getAddress()),
+      wdk.getAccount(evm.id, derivationIndex).then((a) => a.getAddress()),
+      wdk.getAccount(sol.id, derivationIndex).then((a) => a.getAddress()),
     ]);
     return { evmAddress, solanaAddress };
   }
 
-  async getBalances(index: number): Promise<BalanceEntry[]> {
-    const jobs = networksFor(this.mode!).flatMap((n) =>
+  /** Balances for every token on the networks this account has an address for. */
+  async getBalances(acct: AccountInfo): Promise<BalanceEntry[]> {
+    const nets = networksFor(this.mode!).filter((n) => addressFor(acct, n.kind));
+    const jobs = nets.flatMap((n) =>
       n.tokens.map(async (t): Promise<BalanceEntry> => {
         try {
-          const acct = await this.account(n.id, index);
-          const raw = t.address ? await acct.getTokenBalance(t.address) : await acct.getBalance();
+          const a = await this.account(n.id, acct);
+          const raw = t.address ? await a.getTokenBalance(t.address) : await a.getBalance();
           return { networkId: n.id, token: t.address, raw: raw.toString() };
         } catch (e) {
           return { networkId: n.id, token: t.address, raw: '0', error: errorMessage(e) };
@@ -88,32 +161,44 @@ export class WalletEngine {
     return Promise.all(jobs);
   }
 
-  async quote(p: SendParams): Promise<bigint> {
-    const acct = await this.account(p.networkId, p.accountIndex);
+  async quote(p: SendParams, acct: AccountInfo): Promise<bigint> {
+    if (acct.source.type === 'watch') throw new WatchOnlyError();
+    const a = await this.account(p.networkId, acct);
     const amount = BigInt(p.amount);
-    const q = p.token
-      ? await acct.quoteTransfer({ token: p.token, recipient: p.to, amount })
-      : await acct.quoteSendTransaction({ to: p.to, value: amount });
+    const q = p.token ? await a.quoteTransfer({ token: p.token, recipient: p.to, amount }) : await a.quoteSendTransaction({ to: p.to, value: amount });
     return q.fee;
   }
 
-  async send(p: SendParams): Promise<{ hash: string; fee: bigint }> {
-    const acct = await this.account(p.networkId, p.accountIndex);
+  async send(p: SendParams, acct: AccountInfo): Promise<{ hash: string; fee: bigint }> {
+    if (acct.source.type === 'watch') throw new WatchOnlyError();
+    const a = await this.account(p.networkId, acct);
+    if (!a.transfer || !a.sendTransaction) throw new WatchOnlyError();
     const amount = BigInt(p.amount);
-    return p.token
-      ? acct.transfer({ token: p.token, recipient: p.to, amount })
-      : acct.sendTransaction({ to: p.to, value: amount });
+    return p.token ? a.transfer({ token: p.token, recipient: p.to, amount }) : a.sendTransaction({ to: p.to, value: amount });
   }
 
   /** Returns 'confirmed' / 'failed' once the tx has a receipt, otherwise null. */
-  async txStatus(networkId: string, index: number, hash: string): Promise<'confirmed' | 'failed' | null> {
-    const acct = await this.account(networkId, index);
-    const receipt = (await acct.getTransactionReceipt(hash)) as Record<string, unknown> | null;
+  async txStatus(networkId: string, acct: AccountInfo, hash: string): Promise<'confirmed' | 'failed' | null> {
+    const a = await this.account(networkId, acct);
+    const receipt = (await a.getTransactionReceipt(hash)) as Record<string, unknown> | null;
     if (!receipt) return null;
     if (getNetwork(networkId).kind === 'evm') return receipt.status === 0 ? 'failed' : 'confirmed';
     const meta = receipt.meta as { err?: unknown } | undefined;
     return meta?.err ? 'failed' : 'confirmed';
   }
+}
+
+function evmConfig(n: Network): EvmConfig {
+  return { provider: n.rpc, chainId: n.chainId };
+}
+
+function solanaConfig(n: Network): SolanaConfig {
+  return { provider: n.rpc, commitment: 'confirmed' };
+}
+
+function watchAccount(address: string, n: Network): ChainAccount {
+  const acct = n.kind === 'evm' ? new WalletAccountReadOnlyEvm(address, evmConfig(n)) : new WalletAccountReadOnlySolana(address, solanaConfig(n));
+  return acct as unknown as ChainAccount;
 }
 
 export const normalizeMnemonic = (m: string) => m.trim().toLowerCase().split(/\s+/).join(' ');

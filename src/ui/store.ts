@@ -8,6 +8,8 @@ import {
   type ChartRange,
   type PriceInfo,
   type PricePoint,
+  accountChains,
+  type AccountInfo,
   type WalletState,
 } from '@/src/lib/rpc';
 import { toNumber } from '@/src/lib/format';
@@ -27,7 +29,8 @@ export type Page =
   | { name: 'token'; asset: AssetRef }
   | { name: 'search' }
   | { name: 'settings' }
-  | { name: 'revealSeed' };
+  | { name: 'addAccount' }
+  | { name: 'revealSecret'; keyringId?: string };
 
 export interface Asset extends AssetRef {
   key: string;
@@ -171,28 +174,32 @@ export const useStore = create<Store>((set, get) => ({
   },
 }));
 
-/** Joins balances with network/token metadata and prices. */
+/** Joins balances with network/token metadata and prices, for the chains the selected account has. */
 export function buildAssets(wallet: WalletState, balances: BalanceEntry[] | null, prices: Record<string, PriceInfo>): Asset[] {
   const byKey = new Map((balances ?? []).map((b) => [assetKey(b.networkId, b.token), b]));
-  return networksFor(wallet.networkMode).flatMap((network) =>
-    network.tokens.map((meta) => {
-      const key = assetKey(network.id, meta.address);
-      const entry = byKey.get(key);
-      const balance = entry ? BigInt(entry.raw) : 0n;
-      const price = prices[meta.priceId];
-      return {
-        key,
-        networkId: network.id,
-        token: meta.address,
-        network,
-        meta,
-        balance,
-        usd: price === undefined ? null : toNumber(balance, meta.decimals) * price.usd,
-        change24h: price?.change24h ?? null,
-        error: entry?.error,
-      };
-    }),
-  );
+  const account = selectedAccount(wallet);
+  const chains = account ? accountChains(account) : [];
+  return networksFor(wallet.networkMode)
+    .filter((n) => chains.includes(n.kind))
+    .flatMap((network) =>
+      network.tokens.map((meta) => {
+        const key = assetKey(network.id, meta.address);
+        const entry = byKey.get(key);
+        const balance = entry ? BigInt(entry.raw) : 0n;
+        const price = prices[meta.priceId];
+        return {
+          key,
+          networkId: network.id,
+          token: meta.address,
+          network,
+          meta,
+          balance,
+          usd: price === undefined ? null : toNumber(balance, meta.decimals) * price.usd,
+          change24h: price?.change24h ?? null,
+          error: entry?.error,
+        };
+      }),
+    );
 }
 
 export function useAssets(): Asset[] {
@@ -211,7 +218,13 @@ export function volatileIds(assets: Asset[]): string[] {
   return [...new Set(assets.filter((a) => a.balance > 0n && !STABLE_PRICE_IDS.has(a.meta.priceId)).map((a) => a.meta.priceId))].sort();
 }
 
+function selectedAccount(wallet: WalletState): AccountInfo | undefined {
+  return wallet.accounts.find((a) => a.index === wallet.selectedAccount) ?? wallet.accounts[0];
+}
+
 export function useAccount() {
   const wallet = useStore((s) => s.wallet);
-  return wallet?.accounts.find((a) => a.index === wallet.selectedAccount) ?? wallet?.accounts[0];
+  return wallet ? selectedAccount(wallet) : undefined;
 }
+
+export const isWatchOnly = (a: AccountInfo | undefined) => a?.source.type === 'watch';

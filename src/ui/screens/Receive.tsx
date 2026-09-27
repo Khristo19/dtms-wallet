@@ -1,14 +1,16 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { networksFor, type ChainKind } from '@/src/lib/networks';
+import { accountChains, addressFor } from '@/src/lib/rpc';
 import { Capsule, copyText, Grouped, openTab, Row, SectionHeader, Segmented, Separator, SheetPage } from '../components/ui';
 import { useAccount, useStore } from '../store';
 
 export function Receive({ initialKind = 'evm' }: { initialKind?: ChainKind }) {
   const { pop, wallet } = useStore();
   const account = useAccount()!;
-  const [kind, setKind] = useState<ChainKind>(initialKind);
-  const address = kind === 'evm' ? account.evmAddress : account.solanaAddress;
+  const chains = accountChains(account);
+  const [kind, setKind] = useState<ChainKind>(chains.includes(initialKind) ? initialKind : chains[0]!);
+  const address = addressFor(account, kind)!;
   const nets = networksFor(wallet!.networkMode).filter((n) => n.kind === kind);
   const label = kind === 'evm' ? 'EVM' : 'Solana';
 
@@ -18,13 +20,15 @@ export function Receive({ initialKind = 'evm' }: { initialKind?: ChainKind }) {
       onClose={pop}
       footer={<Capsule onClick={() => copyText(address, `${label} address copied`)}>Copy {label} Address</Capsule>}
     >
-      <Segmented
-        label="Chain"
-        options={['evm', 'solana'] as const}
-        value={kind}
-        onChange={setKind}
-        render={(k) => (k === 'evm' ? 'Ethereum & EVM' : 'Solana')}
-      />
+      {chains.length > 1 && (
+        <Segmented
+          label="Chain"
+          options={chains}
+          value={kind}
+          onChange={setKind}
+          render={(k) => (k === 'evm' ? 'Ethereum & EVM' : 'Solana')}
+        />
+      )}
 
       <div className="flex shrink-0 flex-col items-center gap-3 rounded-card glass-surface px-5 pt-5 pb-4">
         {/* QR stays dark-on-white in both appearances so it scans reliably. */}

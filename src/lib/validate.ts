@@ -22,6 +22,22 @@ export function base58Decode(s: string): Uint8Array | null {
   return new Uint8Array(bytes);
 }
 
+/** Encodes bytes as base58 (Bitcoin alphabet, as used by Solana). */
+export function base58Encode(bytes: Uint8Array): string {
+  let n = 0n;
+  for (const b of bytes) n = (n << 8n) | BigInt(b);
+  let out = '';
+  while (n > 0n) {
+    out = B58[Number(n % 58n)] + out;
+    n /= 58n;
+  }
+  for (const b of bytes) {
+    if (b !== 0) break;
+    out = '1' + out;
+  }
+  return out;
+}
+
 export function isEvmAddress(a: string): boolean {
   return /^0x[0-9a-fA-F]{40}$/.test(a);
 }

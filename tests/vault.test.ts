@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decryptSeed, decryptWithKey, encryptSeed, WrongPasswordError } from '../src/background/vault';
+import { decryptSeed, decryptWithKey, encryptSeed, reencryptWithKey, WrongPasswordError } from '../src/background/vault';
 
 const SEED = 'test test test test test test test test test test test junk';
 const ITER = 1_000; // keep tests fast; production uses 600k
@@ -34,5 +34,16 @@ describe('vault', () => {
     const bytes = atob(vault.ciphertext).split('');
     bytes[0] = String.fromCharCode(bytes[0]!.charCodeAt(0) ^ 1);
     await expect(decryptSeed({ ...vault, ciphertext: btoa(bytes.join('')) }, 'pw12345678')).rejects.toThrow();
+  });
+});
+
+describe('reencryptWithKey', () => {
+  it('replaces the contents, keeps the password, and rejects a foreign key', async () => {
+    const { vault, keyBytes } = await encryptSeed(SEED, 'pw12345678', ITER);
+    const next = await reencryptWithKey(vault, keyBytes, '{"v":2,"secrets":[]}');
+    expect(next.iv).not.toBe(vault.iv);
+    expect((await decryptSeed(next, 'pw12345678')).seed).toBe('{"v":2,"secrets":[]}');
+    const other = await encryptSeed(SEED, 'different-pw', ITER);
+    await expect(reencryptWithKey(vault, other.keyBytes, 'x')).rejects.toBeInstanceOf(WrongPasswordError);
   });
 });

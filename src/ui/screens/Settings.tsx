@@ -52,7 +52,11 @@ export function Settings() {
       <Grouped>
         <Row label="Auto-Lock" value={`${wallet.autoLockMinutes} min`} chevron onClick={() => setAutoLockOpen(true)} />
         <Separator />
-        <Row label="Show Recovery Phrase" chevron onClick={() => push({ name: 'revealSeed' })} />
+        <Row
+          label={wallet.keyrings.length > 1 ? 'Recovery Phrases & Keys' : 'Show Recovery Phrase'}
+          chevron
+          onClick={() => push({ name: 'revealSecret' })}
+        />
         <Separator />
         <Row label="Lock Wallet" onClick={() => guard(async () => setWallet(await rpc('lock')))} />
       </Grouped>

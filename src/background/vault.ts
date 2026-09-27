@@ -69,3 +69,14 @@ export async function decryptSeed(vault: VaultBlob, password: string): Promise<{
   const keyBytes = await deriveKeyBytes(password, b64.decode(vault.salt), vault.iterations);
   return { seed: await decryptWithKey(vault, keyBytes), keyBytes };
 }
+
+/**
+ * Re-encrypts new contents with the key of an unlocked vault (same salt and iterations, fresh IV),
+ * so secrets can be added or removed without asking for the password again.
+ */
+export async function reencryptWithKey(vault: VaultBlob, keyBytes: Uint8Array, plaintext: string): Promise<VaultBlob> {
+  await decryptWithKey(vault, keyBytes); // proves the key belongs to this vault
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(keyBytes), enc.encode(plaintext));
+  return { ...vault, iv: b64.encode(iv), ciphertext: b64.encode(new Uint8Array(ct)) };
+}

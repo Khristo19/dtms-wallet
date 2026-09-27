@@ -1,12 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { formatAmount, formatUnits, formatUsd, parseUnits, shortAddress, toNumber } from '@/src/lib/format';
-import { rpc, type ActivityItem, type SendParams, type TxStatus } from '@/src/lib/rpc';
+import { addressFor, rpc, type ActivityItem, type SendParams, type TxStatus } from '@/src/lib/rpc';
 import { isValidAddress } from '@/src/lib/validate';
 import { AccountAvatar, RecipientAvatar } from '../components/Avatars';
 import { Capsule, copyText, cx, Grouped, openTab, SectionHeader, Separator, SheetPage, Spinner, TextField } from '../components/ui';
 import { ArrowUp, Checkmark, DeleteLeftFill, SwapUnits, XMark } from '../icons';
-import { useAccount, useAssets, useStore, type Asset, type AssetRef } from '../store';
+import { isWatchOnly, useAccount, useAssets, useStore, type Asset, type AssetRef } from '../store';
 import { AssetRow } from './Home';
 import { IS_PANEL } from '../surface';
 
@@ -26,7 +26,19 @@ export function Send({ asset: preset }: { asset?: AssetRef }) {
   const pop = useStore((s) => s.pop);
   const [step, setStep] = useState<Step>(preset ? { id: 'recipient', asset: preset } : { id: 'asset' });
   const assets = useAssets();
+  const account = useAccount();
   const find = (r: AssetRef) => assets.find((a) => a.networkId === r.networkId && a.token === r.token);
+
+  if (isWatchOnly(account) && step.id !== 'sent') {
+    return (
+      <SheetPage title="Send" onClose={pop}>
+        <div className="flex flex-col items-center gap-2 px-6 pt-16 text-center">
+          <p className="m-0 text-headline">This account is view only</p>
+          <p className="m-0 text-callout text-label-2">{account!.name} is a watched address, so it can't send. Switch to another account to send funds.</p>
+        </div>
+      </SheetPage>
+    );
+  }
 
   switch (step.id) {
     case 'asset':
@@ -100,9 +112,12 @@ function PickRecipient({ asset, onBack, onClose, onNext }: { asset: Asset; onBac
   const kind = asset.network.kind;
   const trimmed = to.trim();
   const valid = isValidAddress(kind, trimmed);
-  const addressOf = (a: { evmAddress: string; solanaAddress: string }) => (kind === 'evm' ? a.evmAddress : a.solanaAddress);
-  const own = wallet.accounts.find((a) => addressOf(a).toLowerCase() === trimmed.toLowerCase());
-  const others = wallet.accounts.filter((a) => a.index !== me.index);
+  const own = wallet.accounts.find((a) => addressFor(a, kind)?.toLowerCase() === trimmed.toLowerCase());
+  // Quick picks: the user's other accounts that have an address on this chain.
+  const others = wallet.accounts.flatMap((a) => {
+    const address = addressFor(a, kind);
+    return a.index !== me.index && address ? [{ ...a, address }] : [];
+  });
 
   const paste = async () => {
     try {
@@ -157,13 +172,13 @@ function PickRecipient({ asset, onBack, onClose, onNext }: { asset: Asset; onBac
               <div key={a.index}>
                 {i > 0 && <Separator inset={72} />}
                 <button
-                  onClick={() => onNext({ address: addressOf(a), name: a.name })}
+                  onClick={() => onNext({ address: a.address, name: a.name })}
                   className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-[10px] text-left active:bg-pressed"
                 >
                   <AccountAvatar name={a.name} size={40} />
                   <div className="min-w-0">
                     <div className="truncate text-headline">{a.name}</div>
-                    <div className="truncate text-footnote text-label-2">{shortAddress(addressOf(a), 6)}</div>
+                    <div className="truncate text-footnote text-label-2">{shortAddress(a.address, 6)}</div>
                   </div>
                 </button>
               </div>

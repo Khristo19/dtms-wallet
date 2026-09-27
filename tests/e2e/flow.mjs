@@ -114,7 +114,10 @@ async function run(scheme, surface) {
     await sleep(500);
     await shot('08-accounts');
     await btn('Add Account');
-    await sleep(1500);
+    await sheetOpen();
+    await x(`${SHEET}//button[.//span[normalize-space(.)="Create New Account"]]`);
+    await page.waitForFunction(() => !document.querySelector('div.z-30'), { timeout: 20000 });
+    await sleep(800);
     const st = await rpc('getState');
     check(st.result.selectedAccount === 1, 'account 2 added and selected');
     await idle();

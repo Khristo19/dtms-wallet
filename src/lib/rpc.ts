@@ -1,10 +1,40 @@
-import type { NetworkMode } from './networks';
+import type { ChainKind, NetworkMode } from './networks';
+
+/** Where an account's keys come from. */
+export type AccountSource =
+  | { type: 'mnemonic'; keyringId: string; derivationIndex: number }
+  | { type: 'privateKey'; keyringId: string }
+  | { type: 'watch' };
 
 export interface AccountInfo {
+  /** Stable, unique account id (not the derivation index). */
   index: number;
   name: string;
-  evmAddress: string;
-  solanaAddress: string;
+  /** Present when the account has an EVM address (phrase accounts, EVM keys, watched EVM addresses). */
+  evmAddress?: string;
+  /** Present when the account has a Solana address. */
+  solanaAddress?: string;
+  source: AccountSource;
+}
+
+/** Public description of a stored secret (the secret itself only lives in the encrypted vault). */
+export interface KeyringInfo {
+  id: string;
+  kind: 'mnemonic' | 'privateKey';
+  label: string;
+  /** For private keys: which chain the key belongs to. */
+  chain?: ChainKind;
+}
+
+/** Id of the recovery phrase the wallet was created or imported with. */
+export const PRIMARY_KEYRING = 'primary';
+
+export function accountChains(a: Pick<AccountInfo, 'evmAddress' | 'solanaAddress'>): ChainKind[] {
+  return [...(a.evmAddress ? (['evm'] as const) : []), ...(a.solanaAddress ? (['solana'] as const) : [])];
+}
+
+export function addressFor(a: Pick<AccountInfo, 'evmAddress' | 'solanaAddress'>, kind: ChainKind): string | undefined {
+  return kind === 'evm' ? a.evmAddress : a.solanaAddress;
 }
 
 export type OpenIn = 'popup' | 'panel';
@@ -13,6 +43,7 @@ export interface WalletState {
   initialized: boolean;
   unlocked: boolean;
   accounts: AccountInfo[];
+  keyrings: KeyringInfo[];
   selectedAccount: number;
   networkMode: NetworkMode;
   autoLockMinutes: number;
@@ -70,7 +101,13 @@ export interface RpcMap {
   createWallet: [{ mnemonic: string; password: string }, WalletState];
   unlock: [{ password: string }, WalletState];
   lock: [void, WalletState];
-  addAccount: [void, WalletState];
+  /** Next account from a recovery phrase (default: the selected account's phrase, else the primary). */
+  addAccount: [{ keyringId?: string }, WalletState];
+  /** Adds a recovery phrase (imported or newly created) and its first account. */
+  importMnemonic: [{ mnemonic: string }, WalletState];
+  importPrivateKey: [{ privateKey: string }, WalletState];
+  addWatchAddress: [{ address: string; name?: string }, WalletState];
+  removeAccount: [{ index: number }, WalletState];
   renameAccount: [{ index: number; name: string }, WalletState];
   selectAccount: [{ index: number }, WalletState];
   setNetworkMode: [{ mode: NetworkMode }, WalletState];
@@ -82,7 +119,8 @@ export interface RpcMap {
   quoteSend: [SendParams, { fee: string }];
   send: [SendParams, ActivityItem];
   getActivity: [{ accountIndex: number }, ActivityItem[]];
-  revealSeed: [{ password: string }, string];
+  /** Reveals a stored recovery phrase or private key (default: the primary phrase). */
+  revealSecret: [{ password: string; keyringId?: string }, { kind: 'mnemonic' | 'privateKey'; value: string }];
   resetWallet: [void, WalletState];
 }
 

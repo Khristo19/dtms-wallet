@@ -13,6 +13,7 @@ Please **don't open a public issue** for security problems. Report them privatel
 - No maximum-fee cap on sends; the network fee is shown for review before sending.
 - Balances and transactions go through public RPC endpoints and CoinGecko, which can see your addresses.
 - The unlocked session key is kept in `chrome.storage.session` (memory only) until auto-lock or browser exit.
+- All recovery phrases and imported private keys share one password. Removing an imported account deletes its key from the vault — keep your own backup.
 
 ## Official source
 

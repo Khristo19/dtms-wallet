@@ -15,7 +15,7 @@ Tokens live in `src/ui/styles.css` (light + dark, following `prefers-color-schem
 
 ## Features
 - Create (with phrase confirmation) or import a wallet; password-encrypted vault
-- Multiple accounts, rename/switch
+- Multiple accounts, Phantom-style: create from a recovery phrase, import or create more recovery phrases, import EVM/Solana private keys (Phantom/Solflare/CLI formats), watch any address (view only); rename, remove, and reveal each phrase or key (password-gated)
 - Balances for native coins + USDC/USDT across all networks, indicative USD values (CoinGecko)
 - Send native coins and tokens with fee quote → review → confirm; local activity history with live status
 - Receive with QR codes; testnet faucet shortcuts
@@ -33,7 +33,7 @@ Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked** a
 For development, run `npm run dev` and load `.output/chrome-mv3-dev` the same way; it rebuilds on save.
 
 ```bash
-npm test               # vitest: vault crypto, amount formatting, address validation, chart math
+npm test               # vitest: vault crypto, key import/migration, amount formatting, address validation, chart math
 npm run test:e2e       # headless Chrome: full flow in popup + side panel, light + dark (real devnet send)
 npm run compile        # typecheck
 ```
@@ -46,7 +46,7 @@ popup (React UI)  ── typed RPC (chrome.runtime messages) ──►  backgrou
                                                                src/background/vault.ts    PBKDF2 → AES-256-GCM vault
 ```
 - The seed never leaves the background except when the user explicitly reveals it (password required) or during onboarding.
-- Vault: PBKDF2-SHA256 (600k iterations) → AES-256-GCM, stored in `chrome.storage.local`.
+- Vault: PBKDF2-SHA256 (600k iterations) → AES-256-GCM, stored in `chrome.storage.local`. It holds every recovery phrase and imported private key (`src/background/keyrings.ts`); wallets from before multi-account support are migrated on unlock. Account names and addresses are stored separately and contain no secrets.
 - Unlocked session: the derived key is kept in `chrome.storage.session` (memory-only) so the WDK instance can be rebuilt
   after MV3 suspends the service worker. Auto-lock clears it via `chrome.alarms`; balance polling does not extend it.
 - Networks and tokens are configured in `src/lib/networks.ts`.

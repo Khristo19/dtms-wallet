@@ -7,7 +7,7 @@ import { AccountAvatar, CoinAvatar } from '../components/Avatars';
 import { cx, LargeTitle, Segmented, Separator, Skeleton } from '../components/ui';
 import { ArrowDownCircleFill, ArrowUpCircleFill, Chevron, EyeFill, EyeSlashFill, PlusCircleFill, PopupWindow, SidebarRight, SwapCircleFill, Triangle } from '../icons';
 import { IS_PANEL, switchSurface, useWindowId } from '../surface';
-import { toHoldings, useAccount, useAssets, useStore, volatileIds, type Asset } from '../store';
+import { isWatchOnly, toHoldings, useAccount, useAssets, useStore, volatileIds, type Asset } from '../store';
 
 const RANGES: ChartRange[] = ['1D', '1W', '1M', '1Y', 'All'];
 const HIDDEN = '••••';
@@ -48,9 +48,12 @@ export function Home() {
         <div className="relative flex min-h-full flex-col gap-[14px] px-4 pt-4 pb-[110px]">
           {/* Top buttons */}
           <div className="relative flex items-center justify-end gap-[10px]">
-            {wallet?.networkMode === 'testnet' && (
-              <span className="mr-auto rounded-full bg-warning/15 px-[10px] py-1 text-caption font-semibold text-warning-text">Testnet</span>
-            )}
+            <div className="mr-auto flex items-center gap-[6px]">
+              {wallet?.networkMode === 'testnet' && (
+                <span className="rounded-full bg-warning/15 px-[10px] py-1 text-caption font-semibold text-warning-text">Testnet</span>
+              )}
+              {isWatchOnly(account) && <span className="rounded-full bg-fill-3 px-[10px] py-1 text-caption font-semibold text-label-2">View Only</span>}
+            </div>
             <button
               aria-label={IS_PANEL ? 'Switch to popup' : 'Open in side panel'}
               title={IS_PANEL ? 'Switch to popup' : 'Open in side panel'}
@@ -123,7 +126,12 @@ export function Home() {
 
           {/* Action tiles */}
           <div className="relative grid shrink-0 grid-cols-4 gap-[10px]">
-            <Tile primary icon={<ArrowUpCircleFill />} label="Send" onClick={() => push({ name: 'send' })} />
+            <Tile
+              primary
+              icon={<ArrowUpCircleFill />}
+              label="Send"
+              onClick={() => (isWatchOnly(account) ? showToast('This account is view only — it can’t send') : push({ name: 'send' }))}
+            />
             <Tile icon={<ArrowDownCircleFill />} label="Receive" onClick={() => push({ name: 'receive' })} />
             <Tile icon={<SwapCircleFill />} label="Swap" onClick={() => showToast('Swaps are coming soon')} />
             <Tile icon={<PlusCircleFill />} label="Buy" onClick={() => showToast('Buying crypto is coming soon')} />
